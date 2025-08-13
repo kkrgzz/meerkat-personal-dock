@@ -1,0 +1,61 @@
+services:
+  vaultwarden:
+    image: vaultwarden/server:1.30.5
+    container_name: vaultwarden
+    restart: always
+
+    # If you want the container to run as your host user/group (optional):
+    # user: "${USERMAP_UID:-1000}:${USERMAP_GID:-1000}"
+
+    environment:
+      # --- Core ---
+      - DOMAIN=${VW_DOMAIN}                      # e.g., https://vault.example.com
+      - ADMIN_TOKEN=${VW_ADMIN_TOKEN}            # strong random string
+      - SIGNUPS_ALLOWED=${VW_SIGNUPS_ALLOWED:-false}
+      - INVITATIONS_ALLOWED=${VW_INVITATIONS_ALLOWED:-true}
+      - WEBSOCKET_ENABLED=true                   # required for live updates
+      - WEBSOCKET_ADDRESS=0.0.0.0
+      - WEBSOCKET_PORT=3012
+      # Rocket (web server) tuning (optional)
+      - ROCKET_PORT=80
+      - ROCKET_WORKERS=${VW_ROCKET_WORKERS:-auto}
+
+      # --- SMTP (adjust to your provider) ---
+      - SMTP_HOST=${VW_SMTP_HOST}
+      - SMTP_FROM=${VW_SMTP_FROM}
+      - SMTP_FROM_NAME=${VW_SMTP_FROM_NAME:-Vaultwarden}
+      - SMTP_PORT=${VW_SMTP_PORT:-587}
+      - SMTP_SECURITY=${VW_SMTP_SECURITY:-starttls}     # starttls|force_tls|off
+      - SMTP_USERNAME=${VW_SMTP_USERNAME}
+      - SMTP_PASSWORD=${VW_SMTP_PASSWORD}
+      - SMTP_TIMEOUT=${VW_SMTP_TIMEOUT:-15}
+
+      # --- Attachments / org sends (optional limits) ---
+      - ATTACHMENTS_FOLDER=/data/attachments
+      - ICON_CACHE_TTL=${VW_ICON_CACHE_TTL:-2592000}    # 30 days
+      - SENDS_ALLOWED=${VW_SENDS_ALLOWED:-true}
+      - ATTACHMENT_SIZE_LIMIT=${VW_ATTACHMENT_SIZE_LIMIT:-52428800}  # 50 MB
+
+      # --- Misc ---
+      - LOG_FILE=/data/vaultwarden.log
+      - EXTENDED_LOGGING=${VW_EXTENDED_LOGGING:-false}
+      - TZ=${TZ:-Europe/Berlin}
+
+    volumes:
+      - vaultwarden_data:/data
+
+    networks:
+      - proxy-network
+
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "-", "http://localhost/alive"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  vaultwarden_data:
+
+networks:
+  proxy-network:
+    external: true

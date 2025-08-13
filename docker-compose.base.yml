@@ -1,0 +1,30 @@
+services:
+  nginx-proxy-manager:
+    image: 'jc21/nginx-proxy-manager:2.12.6'
+    container_name: nginx-proxy-manager
+    restart: always
+    ports:
+      - '80:80'
+      - '443:443'
+      #- '127.0.0.1:81:81'
+      - '81:81'
+    volumes:
+      - npm_data:/data
+      - npm_letsencrypt:/etc/letsencrypt
+    networks:
+      - proxy-network
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    
+    environment:
+      DB_SQLITE_FILE: "/data/database.sqlite"
+      DISABLE_IPV6: 'true'
+
+volumes:
+  npm_data:
+  npm_letsencrypt:
+
+networks:
+  proxy-network:
+    external: true
